@@ -213,6 +213,20 @@ a{color:var(--amber);text-decoration:none}
 .ln .txt b{display:block;font-weight:500;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ln .txt small{color:var(--ash);font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ln .est{margin:0;flex:0 0 auto}
+.tj .pie{margin-top:auto;display:flex;align-items:center;gap:7px;width:100%;min-width:0}
+.tj .pie .est{margin-top:0}
+.tj .cal{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--amber);font-weight:600}
+.tj .cal .ic{width:11px;height:11px}
+
+/* flechas de carrusel: solo con mouse */
+.estante>header .flechas{display:none;margin-left:auto;gap:6px}
+.flechas button{width:32px;height:32px;border-radius:50%;border:1px solid var(--rim);background:var(--soil);color:var(--linen);font-size:18px;line-height:1}
+.flechas button:disabled{opacity:.3}
+@media (hover:hover) and (pointer:fine){ .estante>header .flechas{display:flex} }
+@media (min-width:700px){
+  .fila>*{flex-basis:150px}
+  .vista{max-width:1100px;margin:0 auto}
+}
 .ln .est span{display:none}
 
 /* ---------- enlace de seccion ---------- */
@@ -335,8 +349,16 @@ details.filtros .caja{padding:12px 13px;display:grid;gap:11px}
 .etq{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ash);margin-top:9px}
 .etq i{width:7px;height:7px;border-radius:50%;display:block}
 
-.segm{display:flex;gap:5px;background:var(--ember);padding:4px;border-radius:11px;margin-bottom:14px}
-.segm button{flex:1;padding:9px 4px;border-radius:8px;font-size:13px;color:var(--ash);transition:all .15s ease}
+.segm{display:flex;flex-wrap:wrap;gap:5px;background:var(--ember);padding:4px;border-radius:11px;margin-bottom:14px}
+.segm button{flex:1 0 auto;padding:9px 8px;border-radius:8px;font-size:13px;color:var(--ash);transition:all .15s ease;min-height:38px}
+.segm.chico button{padding:7px 8px;font-size:12px;min-height:32px}
+
+.progreso{display:flex;align-items:center;gap:10px;margin:-2px 0 14px;font-size:12.5px;color:var(--ash)}
+.progreso .cont{display:flex;align-items:center;border:1px solid var(--rim);border-radius:10px;background:var(--ember)}
+.progreso .cont b{min-width:38px;text-align:center;font-size:14px;color:var(--linen);font-weight:600}
+.progreso .cont button{width:40px;height:40px;font-size:18px;color:var(--ash)}
+.progreso .cont button:active{color:var(--amber)}
+.fechas label span{color:var(--ash2);opacity:.8}
 .segm button.on{background:var(--soil);color:var(--linen);box-shadow:0 1px 3px rgba(0,0,0,.4)}
 
 .acciones{display:flex;gap:8px;margin-bottom:16px}
@@ -445,7 +467,8 @@ body.con-hoja #aviso.on{transform:translate(-50%,0)}
           <select id="f-orden">
             <option value="reciente">Agregado recientemente</option>
             <option value="antiguo">Esperando desde hace más</option>
-            <option value="plan">Fecha planeada</option>
+            <option value="plan">Fecha prevista</option>
+            <option value="visto">Visto recientemente</option>
             <option value="titulo">Título</option>
             <option value="calificacion">Calificación</option>
           </select>
@@ -456,7 +479,9 @@ body.con-hoja #aviso.on{transform:translate(-50%,0)}
             <option value="">Todo</option>
             <option value="fav">Solo favoritos</option>
             <option value="pend">Solo pendientes</option>
+            <option value="curso">Solo en curso</option>
             <option value="hechos">Solo terminados</option>
+            <option value="fecha">Con fecha prevista</option>
           </select>
         </div>
       </div>
@@ -539,8 +564,8 @@ body.con-hoja #aviso.on{transform:translate(-50%,0)}
    vuelve a pedir nada en ningún dispositivo.
    ============================================================ */
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxgvpTQ0iFgXsa3qLvvKDXjPXj48YVEv8kxAeIlOWgREVSqs6gAs8FT_AoZqhgScliy8w/exec";   // https://script.google.com/macros/s/..../exec
-const CLAVE      = "2022";   // la misma que escribiste en Codigo.gs
+const SCRIPT_URL = "";   // https://script.google.com/macros/s/..../exec
+const CLAVE      = "";   // la misma que escribiste en Codigo.gs
 
 /* ↑↑↑  DE AQUÍ PARA ABAJO NO HACE FALTA TOCAR NADA  ↑↑↑ */
 
@@ -549,6 +574,7 @@ const TIPOS = {
     n:"Álbum", pl:"Música", ic:"i-disco", color:"var(--t-album)", g1:"#4A2B22", g2:"#271614", alta:false, cal:true,
     subEtq:"Artista",
     estados:["Pendiente","Escuchado","Descartado"],
+    hechos:["Escuchado"], curso:[], verbo:"escuchar", visto:"Lo escuchaste",
     archiva:["Descartado"],
     rapido:[
       {k:"titulo",   ph:"Nombre del álbum", req:true},
@@ -560,7 +586,8 @@ const TIPOS = {
   pelicula: {
     n:"Película", pl:"Películas", ic:"i-pelicula", color:"var(--t-pelicula)", g1:"#372541", g2:"#1E1726", alta:true, cal:true,
     subEtq:"Dirección o reparto",
-    estados:["Pendiente","Vista","Descartada"],
+    estados:["Pendiente","Viendo","Vista","Descartada"],
+    hechos:["Vista"], curso:["Viendo"], verbo:"verla", visto:"La viste",
     archiva:["Descartada"],
     rapido:[
       {k:"titulo",ph:"Título", req:true},
@@ -571,7 +598,8 @@ const TIPOS = {
   serie: {
     n:"Serie", pl:"Series", ic:"i-serie", color:"var(--t-serie)", g1:"#2C3826", g2:"#191F17", alta:true, cal:true,
     subEtq:"Plataforma",
-    estados:["Pendiente","En progreso","Terminada","Abandonada"],
+    estados:["Pendiente","Viendo","Pausada","Terminada","Abandonada"],
+    hechos:["Terminada"], curso:["Viendo","Pausada"], verbo:"empezarla", visto:"La terminaste",
     archiva:["Abandonada"],
     rapido:[
       {k:"titulo",   ph:"Nombre de la serie", req:true},
@@ -583,6 +611,7 @@ const TIPOS = {
     n:"Contenido", pl:"Contenido", ic:"i-enlace", color:"var(--t-video)", g1:"#1D3B37", g2:"#13231F", alta:false, cal:false,
     subEtq:"Categoría",
     estados:["Guardado","Revisado","Utilizado"],
+    hechos:["Revisado","Utilizado"], curso:[], verbo:"revisarlo", visto:"Lo revisaste",
     archiva:[],
     rapido:[
       {k:"link",     ph:"Pega el link", req:true, url:true},
@@ -594,6 +623,7 @@ const TIPOS = {
     n:"Artista", pl:"Música", ic:"i-persona", color:"var(--t-artista)", g1:"#3C2B1E", g2:"#221810", alta:false, cal:false,
     subEtq:"Género",
     estados:["Por revisar","Revisado"],
+    hechos:["Revisado"], curso:[], verbo:"escucharlo", visto:"Lo revisaste",
     archiva:[],
     rapido:[
       {k:"titulo",   ph:"Nombre del artista", req:true},
@@ -605,7 +635,8 @@ const TIPOS = {
 const ORDEN_TIPOS = ["album","pelicula","serie","video","artista"];
 const CAMPOS = ["id","tipo","titulo","subtitulo","estado","link","imagen","anio","genero",
                 "etiquetas","calificacion","favorito","fechaPlan","notas","bandera",
-                "creado","actualizado","archivado","duracion","estreno"];
+                "creado","actualizado","archivado","duracion","estreno",
+                "visto","temporada","episodio","formato"];
 
 const K = {cfg:"acervo.cfg", items:"acervo.items", cat:"acervo.cat", cola:"acervo.cola", sync:"acervo.sync"};
 
@@ -655,7 +686,28 @@ function atajosFecha(){
   const aLunes  = ((8-dow)%7)||7;                 // el próximo lunes
   return [["Hoy",mas(0)],["Mañana",mas(1)],["Este fin",mas(aSabado)],["Próx. semana",mas(aLunes)]];
 }
-function terminado(it){ const t=tipoDe(it); return t.estados.indexOf(it.estado)>0; }
+function terminado(it){ return (tipoDe(it).hechos||[]).includes(it.estado); }
+function pendiente(it){ return it.estado===tipoDe(it).estados[0]; }
+function enCurso(it){ return (tipoDe(it).curso||[]).includes(it.estado); }
+
+/** Un solo lugar para cambiar estado: archiva, fecha real y fecha prevista. */
+function cambiarEstado(id,s){
+  const it=E.items.find(x=>x.id===id); if(!it) return {};
+  const t=tipoDe(it), c={estado:s, archivado:t.archiva.includes(s)};
+  if((t.hechos||[]).includes(s) && !it.visto) c.visto=hoyLocal();     // fecha real
+  if((t.hechos||[]).includes(s) || c.archivado) c.fechaPlan="";       // sale de la agenda
+  if(it.tipo==="serie" && s==="Viendo" && !it.temporada){ c.temporada="1"; c.episodio=it.episodio||"1"; }
+  actualizar(id,c);
+  return c;
+}
+function hoyLocal(){ return isoLocal(new Date()); }
+
+/** Datos viejos: "En progreso" pasó a llamarse "Viendo". */
+function migrarEstados(){
+  E.items.forEach(it=>{
+    if(it.tipo==="serie" && it.estado==="En progreso") actualizar(it.id,{estado:"Viendo"});
+  });
+}
 
 function fFecha(iso){
   if(!iso) return "";
@@ -730,7 +782,7 @@ async function sincronizar({silencio=false}={}){
     await vaciarCola();
     const d = await api("sincronizar");
     E.items = d.items; E.cat = d.catalogos||E.cat; E.sync = ahora();
-    persistir(); pintarTodo();
+    persistir(); migrarEstados(); pintarTodo();
     if(!silencio) aviso("Todo al día");
     return true;
   }catch(err){
@@ -755,7 +807,7 @@ function nuevoItem(tipo,datos){
     id:idTmp(), tipo, titulo:"", subtitulo:"", estado:t.estados[0], link:"", imagen:"",
     anio:"", genero:"", etiquetas:"", calificacion:0, favorito:false, fechaPlan:"",
     notas:"", bandera:false, creado:ahora(), actualizado:ahora(), archivado:false,
-    duracion:"", estreno:""
+    duracion:"", estreno:"", visto:"", temporada:"", episodio:"", formato:""
   },datos);
 }
 
@@ -879,13 +931,13 @@ function portada(it,{corto=false}={}){
   if(!it.imagen) return relleno;
   const mejor=arreglarImagen(it.imagen);
   const respaldo = mejor!==it.imagen ? ` data-orig="${esc(it.imagen)}"` : "";
-  return relleno + `<img class="frente" src="${esc(mejor)}"${respaldo} alt="" loading="lazy" onerror="acervoFallo(this)">`;
+  return relleno + `<img class="frente" src="${esc(mejor)}"${respaldo} alt="" loading="lazy" decoding="async" onerror="acervoFallo(this)">`;
 }
 
 function sello(it){
   const t=tipoDe(it);
-  const i=t.estados.indexOf(it.estado);
-  const color = i<=0 ? t.color : (i===t.estados.length-1 && t.archiva.length ? "var(--ash2)" : "var(--ok)");
+  const color = pendiente(it) ? t.color : terminado(it) ? "var(--ok)"
+              : t.archiva.includes(it.estado) ? "var(--ash2)" : "var(--amber)";
   return `<button class="est" data-estado="${esc(it.id)}" title="Cambiar estado">
     <i style="background:${color}"></i><span>${esc(it.estado)}</span></button>`;
 }
@@ -900,6 +952,17 @@ function origenDe(it){
   try{ return new URL(it.link).hostname.replace(/^www\./,""); }catch(e){ return ""; }
 }
 
+/** Segunda línea de la tarjeta: lo más útil según el tipo. */
+function lineaDos(it){
+  const t=tipoDe(it);
+  if(it.tipo==="video") return origenDe(it)||it.subtitulo||t.n;
+  if(it.tipo==="serie" && enCurso(it) && (it.temporada||it.episodio))
+    return `T${it.temporada||1} · E${it.episodio||1}`+(it.estado==="Pausada"?" · pausada":"");
+  if(it.tipo==="pelicula"||it.tipo==="serie") return [it.anio, it.subtitulo].filter(Boolean).join(" · ")||t.n;
+  if(it.tipo==="album") return [it.subtitulo, it.formato&&it.formato!=="Álbum"?it.formato:""].filter(Boolean).join(" · ")||t.n;
+  return it.subtitulo||t.n;
+}
+
 function tarjeta(it){
   const t=tipoDe(it);
   return `<div class="tj" data-id="${esc(it.id)}" role="button" tabindex="0">
@@ -910,8 +973,8 @@ function tarjeta(it){
     </div>
     <div class="cuerpo">
       <div class="tt">${esc(nombreDe(it))}</div>
-      <div class="st">${esc(it.tipo==="video"? (origenDe(it)||t.n) : (it.subtitulo||t.n))}</div>
-      ${sello(it)}
+      <div class="st">${esc(lineaDos(it))}</div>
+      <div class="pie">${sello(it)}${it.calificacion?`<span class="cal">${ic("i-estrella")}${it.calificacion}</span>`:""}</div>
     </div>
   </div>`;
 }
@@ -920,7 +983,7 @@ function linea(it){
   const t=tipoDe(it);
   return `<div class="ln" data-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="mini">${portada(it,{corto:true})}</span>
-    <span class="txt"><b>${esc(nombreDe(it))}</b><small>${esc([it.tipo==="video"?it.subtitulo:it.subtitulo, origenDe(it)].filter(Boolean).join(" · ")||t.n)}</small></span>
+    <span class="txt"><b>${esc(nombreDe(it))}</b><small>${esc(lineaDos(it))}</small></span>
     ${(()=>{ const p=!terminado(it)&&planInfo(it.fechaPlan); return p?`<span class="plan-ln ${p.clase}">${p.txt}</span>`:""; })()}
     ${sello(it)}
   </div>`;
@@ -929,7 +992,8 @@ function linea(it){
 function estante(titulo,nota,items){
   if(!items.length) return "";
   return `<section class="estante">
-    <header><h2>${esc(titulo)}</h2><span>${items.length}</span></header>
+    <header><h2>${esc(titulo)}</h2><span>${items.length}</span>
+      ${items.length>3?`<div class="flechas"><button data-mover="-1" aria-label="Anterior" disabled>‹</button><button data-mover="1" aria-label="Siguiente">›</button></div>`:""}</header>
     ${nota?`<p>${esc(nota)}</p>`:""}
     <div class="fila">${items.map(tarjeta).join("")}</div></section>`;
 }
@@ -938,7 +1002,7 @@ function pintarInicio(){
   const v=visibles();
   const h=new Date().getHours();
   $("#saludo").textContent = h<12?"Buenos días":h<19?"Buenas tardes":"Buenas noches";
-  const pend=v.filter(x=>tipoDe(x).estados.indexOf(x.estado)===0).length;
+  const pend=v.filter(pendiente).length;
   $("#resumen").textContent = v.length
     ? `${v.length} ${v.length===1?"elemento":"elementos"} · ${pend} por consumir`
     : "Aún no hay nada guardado.";
@@ -959,19 +1023,19 @@ function pintarInicio(){
   }).join("") + `</div>`;
 
   const hoyISO=hoy();
-  const enCurso = v.filter(x=>x.estado==="En progreso");
+  const curso = v.filter(enCurso);
   const agenda = v.filter(x=>x.fechaPlan && !terminado(x) && planInfo(x.fechaPlan) && planInfo(x.fechaPlan).dif<=14)
                   .sort((a,b)=>a.fechaPlan.localeCompare(b.fechaPlan)).slice(0,14);
   const atrasados = agenda.filter(x=>planInfo(x.fechaPlan).dif<0).length;
   const recientes = [...v].sort((a,b)=>String(b.creado).localeCompare(String(a.creado))).slice(0,14);
-  const olvido = v.filter(x=>tipoDe(x).estados.indexOf(x.estado)===0 && dias(x.creado)>=45)
+  const olvido = v.filter(x=>pendiente(x) && !x.fechaPlan && dias(x.creado)>=45)
                   .sort((a,b)=>String(a.creado).localeCompare(String(b.creado))).slice(0,10);
   const favs = v.filter(x=>x.favorito).slice(0,12);
   const resto = [...v].sort((a,b)=>String(b.creado).localeCompare(String(a.creado))).slice(0,18);
 
   cont.innerHTML = conteos
-    + estante("Tu agenda", atrasados? `${atrasados} se te ${atrasados>1?"pasaron":"pasó"} de fecha.` : "Lo que planeaste para estas dos semanas.", agenda)
-    + estante("En curso","Lo que ya empezaste.",enCurso.filter(x=>!agenda.includes(x)))
+    + estante("Próximos", atrasados? `${atrasados} se te ${atrasados>1?"pasaron":"pasó"} de fecha.` : "Lo que planeaste para estas dos semanas.", agenda)
+    + estante("En curso","Lo que ya empezaste.",curso.filter(x=>!agenda.includes(x)))
     + estante("Recién guardado","",recientes)
     + estante("Lleva tiempo esperando","Pendiente desde hace más de mes y medio.",olvido)
     + (favs.length>=3? estante("Favoritos","",favs):"")
@@ -991,8 +1055,10 @@ function pintarBiblioteca(){
     v=v.filter(x=>normal(x.subtitulo)===n||normal(x.genero)===n||(x.etiquetas||"").split(",").some(e=>normal(e)===n));
   }
   if(f.modo==="fav") v=v.filter(x=>x.favorito);
-  if(f.modo==="pend") v=v.filter(x=>tipoDe(x).estados.indexOf(x.estado)===0);
-  if(f.modo==="hechos") v=v.filter(x=>tipoDe(x).estados.indexOf(x.estado)>0);
+  if(f.modo==="pend") v=v.filter(pendiente);
+  if(f.modo==="curso") v=v.filter(enCurso);
+  if(f.modo==="hechos") v=v.filter(terminado);
+  if(f.modo==="fecha") v=v.filter(x=>x.fechaPlan && !terminado(x));
   if(f.q){
     const n=normal(f.q);
     v=v.filter(x=>normal([x.titulo,x.subtitulo,x.notas,x.etiquetas,x.genero,x.link].join(" ")).includes(n));
@@ -1001,12 +1067,13 @@ function pintarBiblioteca(){
     reciente:(a,b)=>String(b.creado).localeCompare(String(a.creado)),
     antiguo:(a,b)=>String(a.creado).localeCompare(String(b.creado)),
     plan:(a,b)=>(a.fechaPlan||"9999").localeCompare(b.fechaPlan||"9999"),
+    visto:(a,b)=>String(b.visto||"").localeCompare(String(a.visto||"")),
     titulo:(a,b)=>String(a.titulo).localeCompare(String(b.titulo),"es"),
     calificacion:(a,b)=>(b.calificacion||0)-(a.calificacion||0)
   }[f.orden]||((a,b)=>String(b.creado).localeCompare(String(a.creado)));
   v=[...v].sort(ord);
 
-  const activos=[f.estado,f.etiqueta,f.modo&&{fav:"Favoritos",pend:"Pendientes",hechos:"Terminados"}[f.modo]].filter(Boolean);
+  const activos=[f.estado,f.etiqueta,f.modo&&{fav:"Favoritos",pend:"Pendientes",curso:"En curso",hechos:"Terminados",fecha:"Con fecha"}[f.modo]].filter(Boolean);
   $("#filtros-resumen").textContent = activos.length? activos.join(" · ") : "Todo";
 
   const r=$("#resultados");
@@ -1023,7 +1090,7 @@ function pintarBiblioteca(){
 function pintarChips(){
   const c=$("#chips-tipo");
   const cuenta=t=>visibles().filter(x=>x.tipo===t).length;
-  const etq={album:"Álbumes",pelicula:"Películas",serie:"Series",video:"Contenido",artista:"Artistas"};
+  const etq={album:"Música",pelicula:"Películas",serie:"Series",video:"Contenido",artista:"Artistas"};
   c.innerHTML = `<button class="chip${E.filtro.tipo===""?" on":""}" data-tipo="">Todo</button>`
     + ORDEN_TIPOS.map(t=>`<button class="chip${E.filtro.tipo===t?" on":""}" data-tipo="${t}"
         style="${E.filtro.tipo===t?"":"color:"+TIPOS[t].color}">
@@ -1216,6 +1283,7 @@ async function guardarRapido(){
   if(sub) d.subtitulo=sub;
   if(tipo==="artista" && sub) d.genero=sub;
   cerrarHojas();
+  if(tipo==="album" && link && /[?&]i=\d|open\.spotify\.com\/track|\/song\//i.test(link)) d.formato="Canción";
   const it=await crear(tipo,d);
   if(!it) return;
   if(link) aviso("Guardado · buscando portada y datos…",{tono:"info",ms:2600});
@@ -1245,17 +1313,30 @@ function abrirFicha(id){
       ${t.estados.map(s=>`<button data-estado="${esc(s)}" class="${s===it.estado?"on":""}">${esc(s)}</button>`).join("")}
     </div>
 
-    ${(()=>{
+    ${it.tipo==="serie"?`<div class="progreso">
+        <span>Vas en</span>
+        <div class="cont"><button data-prog="temporada:-1" aria-label="Temporada anterior">−</button><b>T${esc(it.temporada||1)}</b><button data-prog="temporada:1" aria-label="Siguiente temporada">+</button></div>
+        <div class="cont"><button data-prog="episodio:-1" aria-label="Episodio anterior">−</button><b>E${esc(it.episodio||1)}</b><button data-prog="episodio:1" aria-label="Siguiente episodio">+</button></div>
+      </div>`:""}
+
+    ${it.tipo==="album"?`<div class="segm chico" id="f-formato">
+        ${["Álbum","EP","Canción"].map(f=>`<button data-formato="${f}" class="${(it.formato||"Álbum")===f?"on":""}">${f}</button>`).join("")}
+      </div>`:""}
+
+    ${terminado(it) ? `<div class="fechas">
+        <label>${esc(t.visto)} el</label>
+        <div class="fila-f"><button class="otra on">${it.visto?fFecha(it.visto):"Sin registrar"}<input type="date" id="e-visto" value="${esc(it.visto||"")}"></button></div>
+      </div>` : (()=>{
       const p=planInfo(it.fechaPlan);
       const at=atajosFecha();
       return `<div class="fechas">
-        <label>¿Cuándo lo vas a ${it.tipo==="album"||it.tipo==="artista"?"escuchar":it.tipo==="video"?"revisar":"ver"}?</label>
+        <label>Fecha prevista para ${esc(t.verbo)} <span>· opcional</span></label>
         <div class="fila-f">
+          <button data-plan="" class="${it.fechaPlan?"":"on"}">Sin fecha</button>
           ${at.map(([n,f])=>`<button data-plan="${f}" class="${it.fechaPlan===f?"on":""}">${n}</button>`).join("")}
-          <button class="otra ${it.fechaPlan&&!at.some(a=>a[1]===it.fechaPlan)?"on":""}">Otra fecha<input type="date" id="e-plan" value="${esc(it.fechaPlan||"")}"></button>
-          ${it.fechaPlan?`<button data-plan="">Quitar</button>`:""}
+          <button class="otra ${it.fechaPlan&&!at.some(a=>a[1]===it.fechaPlan)?"on":""}">${it.fechaPlan&&!at.some(a=>a[1]===it.fechaPlan)?fFecha(it.fechaPlan):"Elegir día"}<input type="date" id="e-plan" value="${esc(it.fechaPlan||"")}"></button>
         </div>
-        ${p?`<div class="actual">Planeado: <b>${p.txt}</b>${p.dif>6||p.dif<-1?` · ${fFecha(it.fechaPlan)}`:""}</div>`:""}
+        ${p?`<div class="actual">Prevista: <b>${p.txt}</b>${p.dif>6||p.dif<-1?` · ${fFecha(it.fechaPlan)}`:""}</div>`:""}
       </div>`;
     })()}
 
@@ -1294,11 +1375,22 @@ function abrirFicha(id){
 
   const h=$("#hoja-ficha");
   h.querySelectorAll("#f-segm button").forEach(b=>b.onclick=()=>{
-    const s=b.dataset.estado, arch=t.archiva.includes(s);
-    actualizar(id,{estado:s,archivado:arch});
-    h.querySelectorAll("#f-segm button").forEach(x=>x.classList.toggle("on",x===b));
-    if(arch){ aviso("Archivado. Lo encuentras en Ajustes."); cerrarHojas(); }
+    const c=cambiarEstado(id,b.dataset.estado);
+    if(c.archivado){ aviso("Movido al Archivo"); cerrarHojas(); return; }
+    abrirFicha(id);
   });
+  h.querySelectorAll("[data-prog]").forEach(b=>b.onclick=()=>{
+    const [campo,paso]=b.dataset.prog.split(":");
+    const act=E.items.find(x=>x.id===id);
+    const c={}; c[campo]=String(Math.max(1,(parseInt(act[campo],10)||1)+(+paso)));
+    if(campo==="temporada" && +paso>0) c.episodio="1";
+    if(!act.temporada && campo!=="temporada") c.temporada="1";
+    if(pendiente(act)) c.estado="Viendo";
+    actualizar(id,c); abrirFicha(id);
+  });
+  h.querySelectorAll("[data-formato]").forEach(b=>b.onclick=()=>{ actualizar(id,{formato:b.dataset.formato}); abrirFicha(id); });
+  const ev=h.querySelector("#e-visto");
+  if(ev) ev.addEventListener("change",()=>{ actualizar(id,{visto:ev.value}); abrirFicha(id); });
   const fav=h.querySelector("#a-fav");
   if(fav) fav.onclick=()=>{ const v=!E.items.find(x=>x.id===id).favorito; actualizar(id,{favorito:v}); abrirFicha(id); };
   const ab=h.querySelector("#a-abrir"); if(ab) ab.onclick=()=>window.open(it.link,"_blank","noopener");
@@ -1313,7 +1405,7 @@ function abrirFicha(id){
   };
   h.querySelectorAll(".fechas button[data-plan]").forEach(b=>b.onclick=()=>{
     actualizar(id,{fechaPlan:b.dataset.plan}); abrirFicha(id);
-    if(b.dataset.plan) aviso("Planeado: "+planInfo(b.dataset.plan).txt);
+    if(b.dataset.plan) aviso("Prevista: "+planInfo(b.dataset.plan).txt);
   });
   const ep=h.querySelector("#e-plan");
   if(ep) ep.addEventListener("change",()=>{ actualizar(id,{fechaPlan:ep.value}); abrirFicha(id); });
@@ -1406,11 +1498,11 @@ $("#b-rapida").onclick=guardarRapido;
 function siguienteEstado(id){
   const it=E.items.find(x=>x.id===id); if(!it) return;
   const t=tipoDe(it);
-  const i=t.estados.indexOf(it.estado);
-  const sig=t.estados[(i+1)%t.estados.length];
-  const arch=t.archiva.includes(sig);
-  actualizar(id,{estado:sig,archivado:arch});
-  aviso(arch?`${sig} · se movió al archivo`:sig,{tono:arch?"info":"ok",ms:1600});
+  const ciclo=t.estados.filter(x=>!t.archiva.includes(x) && x!=="Pausada");
+  const i=ciclo.indexOf(it.estado);
+  const sig=ciclo[(i+1)%ciclo.length];
+  cambiarEstado(id,sig);
+  aviso(sig,{ms:1400});
 }
 
 document.addEventListener("click",e=>{
@@ -1422,6 +1514,19 @@ document.addEventListener("click",e=>{
   const c=e.target.closest(".tj[data-id],.ln[data-id]");
   if(c) abrirFicha(c.dataset.id);
 });
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-mover]"); if(!b) return;
+  const fila=b.closest(".estante").querySelector(".fila");
+  fila.scrollBy({left:(+b.dataset.mover)*fila.clientWidth*0.85, behavior:"smooth"});
+});
+document.addEventListener("scroll",e=>{
+  const f=e.target; if(!f.classList||!f.classList.contains("fila")) return;
+  const bs=f.closest(".estante").querySelectorAll("[data-mover]");
+  if(bs.length!==2) return;
+  bs[0].disabled = f.scrollLeft<4;
+  bs[1].disabled = f.scrollLeft+f.clientWidth >= f.scrollWidth-4;
+},true);
+
 document.addEventListener("keydown",e=>{
   if(e.key!=="Enter"&&e.key!==" ") return;
   const c=e.target.closest&&e.target.closest(".tj[data-id],.ln[data-id]");
@@ -1511,6 +1616,7 @@ document.addEventListener("visibilitychange",()=>{
    ARRANQUE
    ============================================================ */
 pintarListas();
+migrarEstados();
 pintarTodo();
 pintarConexion();
 if(E.cfg.url) sincronizar({silencio:true});
